@@ -29,23 +29,24 @@ jobs:
 
       - name: Generate Dummy .ocmod.zip
         run: |
-          # 1. Create the base folders
-          mkdir -p dummy_ext/extension/my_vendor/module/
-          echo "<?php // TS ACTION WORKS" > dummy_ext/extension/my_vendor/module/ts_test.php
-          
-          # 2. Create the install.json
+          # Create the flat admin folder structure
+          mkdir -p dummy_ext/admin/controller/module/
+          echo "<?php // ADMIN CONTROLLER WORKS" > dummy_ext/admin/controller/module/my_vendor.php
+
+          # Create the install.json at the root
           cat <<EOF > dummy_ext/install.json
           {
             "name": "Dummy Extension",
             "version": "1.0",
             "author": "Ivan Stasiuk",
-            "link": "https://example.com"
+            "link": "https://example.com",
+            "code": "my_vendor"
           }
           EOF
-          
-          # 3. Zip the contents flatly
+
           cd dummy_ext
-          zip -r ../dummy.ocmod.zip .
+          # Zip the contents flatly so admin/ and install.json are at the root
+          zip -r ../my_vendor.ocmod.zip .
 
       - name: Install Extension
         uses: ./
@@ -53,23 +54,17 @@ jobs:
           store-url: 'http://localhost:8080'
           admin-username: 'admin'
           admin-password: 'admin_pass'
-          zip-path: './dummy.ocmod.zip'
+          zip-path: './my_vendor.ocmod.zip'
 
       - name: Debug Extraction Output
         if: always()
         run: |
-          echo "--- Root Extension Folder ---"
-          docker exec opencart-server ls -la /var/www/html/extension/ || true
-          
           echo "--- Checking Vendor Folder ---"
           docker exec opencart-server ls -la /var/www/html/extension/my_vendor/ || true
           
-          echo "--- Checking Module Folder ---"
-          docker exec opencart-server ls -la /var/www/html/extension/my_vendor/module/ || true
-          
-          echo "--- OpenCart Storage (Uploads) ---"
-          docker exec opencart-server ls -la /var/www/html/system/storage/marketplace/ || true
+          echo "--- Checking Admin Controller Folder ---"
+          docker exec opencart-server ls -la /var/www/html/extension/my_vendor/admin/controller/module/ || true
 
       - name: Verify Physical Extraction
         run: |
-          docker exec opencart-server cat /var/www/html/extension/my_vendor/module/ts_test.php | grep "TS ACTION WORKS"
+          docker exec opencart-server cat /var/www/html/extension/my_vendor/admin/controller/module/my_vendor.php | grep "ADMIN CONTROLLER WORKS"
