@@ -1,6 +1,6 @@
 name: 'Install OpenCart 4 Extension'
 description: 'Uses a headless browser to install an .ocmod.zip extension into OpenCart 4.'
-author: 'YourName'
+author: 'Ivan Stasiuk'
 branding:
   icon: 'package'
   color: 'orange'

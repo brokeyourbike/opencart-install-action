@@ -1,6 +1,12 @@
 {
   "name": "opencart-install-action",
   "version": "1.0.0",
+  "author": {
+    "name": "Ivan Stasiuk",
+    "email": "ivan@stasi.uk",
+    "url": "https://stasi.uk"
+  },
+  "license": "MPL-2.0",
   "main": "dist/index.js",
   "scripts": {
     "build": "ncc build src/index.ts -o dist",
