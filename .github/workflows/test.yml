@@ -27,17 +27,17 @@ jobs:
           db-password: 'root'
           admin-password: 'admin_pass'
 
-      - name: Generate Dummy .ocmod.zip
+            - name: Generate Dummy .ocmod.zip
         run: |
           mkdir -p dummy_ext/upload/extension/my_vendor/module/
-          echo "TS ACTION WORKS" > dummy_ext/upload/extension/my_vendor/module/ts_test.txt
+          # Changed to .php
+          echo "<?php // TS ACTION WORKS" > dummy_ext/upload/extension/my_vendor/module/ts_test.php
           
-          # OC4 Requires install.json
           cat <<EOF > dummy_ext/install.json
           {
             "name": "Dummy Extension",
             "version": "1.0",
-            "author": "YourName",
+            "author": "Ivan Stasiuk",
             "link": "https://example.com"
           }
           EOF
@@ -53,6 +53,21 @@ jobs:
           admin-password: 'admin_pass'
           zip-path: './dummy.ocmod.zip'
 
+      - name: Debug Extraction Output
+        if: always()
+        run: |
+          echo "--- Root Extension Folder ---"
+          docker exec opencart-server ls -la /var/www/html/extension/ || true
+          
+          echo "--- Checking Vendor Folder ---"
+          docker exec opencart-server ls -la /var/www/html/extension/my_vendor/ || true
+          
+          echo "--- Checking Module Folder ---"
+          docker exec opencart-server ls -la /var/www/html/extension/my_vendor/module/ || true
+          
+          echo "--- OpenCart Storage (Uploads) ---"
+          docker exec opencart-server ls -la /var/www/html/system/storage/marketplace/ || true
+
       - name: Verify Physical Extraction
         run: |
-          docker exec opencart-server cat /var/www/html/extension/my_vendor/module/ts_test.txt | grep "TS ACTION WORKS"
+          docker exec opencart-server cat /var/www/html/extension/my_vendor/module/ts_test.php | grep "TS ACTION WORKS"
