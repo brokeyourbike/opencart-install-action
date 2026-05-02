@@ -1,0 +1,21 @@
+{
+  "name": "opencart-install-action",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.ts -o dist",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "fmt:fix": "prettier --write '**/*.ts'"
+  },
+  "dependencies": {
+    "@actions/core": "^2",
+    "@actions/exec": "^2",
+    "playwright": "^1.59.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@vercel/ncc": "^0.38.4",
+    "prettier": "^3.8.3",
+    "typescript": "^5"
+  }
+}
