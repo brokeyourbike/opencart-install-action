@@ -91604,7 +91604,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 9407:
+/***/ 1730:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
 "use strict";
@@ -91642,51 +91642,70 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.run = run;
+const path = __importStar(__nccwpck_require__(6928));
 const core = __importStar(__nccwpck_require__(7484));
 const exec = __importStar(__nccwpck_require__(5236));
 const playwright_1 = __nccwpck_require__(3219);
-const path = __importStar(__nccwpck_require__(6928));
+const package_json_1 = __importDefault(__nccwpck_require__(8453));
 async function run() {
     try {
-        const storeUrl = core.getInput('store-url', { required: true });
-        const username = core.getInput('admin-username', { required: true });
-        const password = core.getInput('admin-password', { required: true });
-        const zipPath = path.resolve(core.getInput('zip-path', { required: true }));
+        const storeUrl = core.getInput("store-url", { required: true });
+        const username = core.getInput("admin-username", { required: true });
+        const password = core.getInput("admin-password", { required: true });
+        const zipPath = path.resolve(core.getInput("zip-path", { required: true }));
         // Ensure Playwright browsers are installed on the runner
-        core.info('⚙️ Installing Chromium dependencies...');
-        await exec.exec('npx', ['playwright', 'install', 'chromium', '--with-deps']);
+        core.info(`⚙️ Installing Chromium dependencies (Playwright v${package_json_1.default.version})...`);
+        await exec.exec("npx", [
+            "-y",
+            `playwright@${package_json_1.default.version}`,
+            "install",
+            "chromium",
+            "--with-deps",
+        ]);
         core.info(`🚀 Launching browser to install: ${zipPath}`);
         const browser = await playwright_1.chromium.launch();
         const page = await browser.newPage();
         try {
-            // 1. Login
-            core.info('🔐 Logging into OpenCart admin...');
+            // Login
+            core.info("🔐 Logging into OpenCart admin...");
             await page.goto(`${storeUrl}/admin/`);
-            await page.fill('#input-username', username);
-            await page.fill('#input-password', password);
+            await page.fill("#input-username", username);
+            await page.fill("#input-password", password);
             await page.click('button[type="submit"]');
-            await page.waitForLoadState('networkidle');
-            // 2. Extract Token
+            await page.waitForLoadState("networkidle");
+            // Extract Token
             const currentUrl = page.url();
             const tokenMatch = currentUrl.match(/user_token=([^&]+)/);
             if (!tokenMatch)
-                throw new Error('Authentication failed: user_token not found in URL.');
-            core.info('✅ Authenticated. Navigating to Installer...');
+                throw new Error("Authentication failed: user_token not found in URL.");
+            core.info("✅ Authenticated. Navigating to Installer...");
             const installerUrl = `${storeUrl}/admin/index.php?route=marketplace/installer&user_token=${tokenMatch[1]}`;
             await page.goto(installerUrl);
-            // 3. Upload File
-            core.info('📦 Uploading extension...');
+            // Upload File
+            core.info("📦 Uploading extension...");
             const [fileChooser] = await Promise.all([
-                page.waitForEvent('filechooser'),
-                page.click('#button-upload')
+                page.waitForEvent("filechooser"),
+                page.click("#button-upload"),
             ]);
             await fileChooser.setFiles(zipPath);
-            // 4. Wait for Success
-            core.info('⏳ Waiting for OpenCart extraction process...');
-            const successAlert = page.locator('.alert-success');
-            await successAlert.waitFor({ state: 'visible', timeout: 30000 });
-            core.info('✅ Extension uploaded and extracted successfully!');
+            // Wait for Success
+            core.info("⏳ Waiting for upload to finish...");
+            const successAlert = page.locator(".alert-success");
+            await successAlert.waitFor({ state: "visible", timeout: 30000 });
+            // Finds the green '+' button in the extension list
+            core.info("⚙️ Triggering extraction...");
+            const installButton = page.locator("#extension .btn-success").first();
+            await installButton.waitFor({ state: "visible" });
+            await Promise.all([
+                page.waitForResponse((res) => res.url().includes("installer|install")),
+                installButton.click(),
+            ]);
+            core.info("✅ Extension uploaded and extracted successfully!");
         }
         finally {
             await browser.close();
@@ -91697,11 +91716,10 @@ async function run() {
             core.setFailed(`❌ Action failed: ${error.message}`);
         }
         else {
-            core.setFailed('❌ Action failed with an unknown error');
+            core.setFailed("❌ Action failed with an unknown error");
         }
     }
 }
-run();
 
 
 /***/ }),
@@ -92176,6 +92194,14 @@ module.exports = /*#__PURE__*/JSON.parse('{"Blackberry PlayBook":{"userAgent":"M
 "use strict";
 module.exports = {"rE":"1.59.1"};
 
+/***/ }),
+
+/***/ 8453:
+/***/ ((module) => {
+
+"use strict";
+module.exports = /*#__PURE__*/JSON.parse('{"name":"playwright","version":"1.59.1","description":"A high-level API to automate web browsers","repository":{"type":"git","url":"git+https://github.com/microsoft/playwright.git"},"homepage":"https://playwright.dev","engines":{"node":">=18"},"main":"index.js","exports":{".":{"types":"./index.d.ts","import":"./index.mjs","require":"./index.js","default":"./index.js"},"./package.json":"./package.json","./lib/common/configLoader":"./lib/common/configLoader.js","./lib/fsWatcher":"./lib/fsWatcher.js","./lib/mcp/index":"./lib/mcp/index.js","./lib/program":"./lib/program.js","./lib/reporters/base":"./lib/reporters/base.js","./lib/reporters/list":"./lib/reporters/list.js","./lib/transform/babelBundle":"./lib/transform/babelBundle.js","./lib/transform/compilationCache":"./lib/transform/compilationCache.js","./lib/transform/esmLoader":"./lib/transform/esmLoader.js","./lib/transform/transform":"./lib/transform/transform.js","./lib/internalsForTest":"./lib/internalsForTest.js","./lib/plugins":"./lib/plugins/index.js","./lib/runner/testRunner":"./lib/runner/testRunner.js","./jsx-runtime":{"import":"./jsx-runtime.mjs","require":"./jsx-runtime.js","default":"./jsx-runtime.js"},"./lib/util":"./lib/util.js","./lib/utilsBundle":"./lib/utilsBundle.js","./types/test":{"types":"./types/test.d.ts"},"./types/testReporter":{"types":"./types/testReporter.d.ts"},"./test":{"types":"./test.d.ts","import":"./test.mjs","require":"./test.js","default":"./test.js"}},"bin":{"playwright":"cli.js"},"author":{"name":"Microsoft Corporation"},"license":"Apache-2.0","dependencies":{"playwright-core":"1.59.1"},"optionalDependencies":{"fsevents":"2.3.2"}}');
+
 /***/ })
 
 /******/ 	});
@@ -92274,12 +92300,18 @@ module.exports = {"rE":"1.59.1"};
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(9407);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+var exports = __webpack_exports__;
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const main_1 = __nccwpck_require__(1730);
+(0, main_1.run)();
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;

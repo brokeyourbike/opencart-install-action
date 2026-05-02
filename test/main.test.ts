@@ -1,3 +1,4 @@
+import pwPkg from "playwright/package.json";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import * as core from "@actions/core";
 import * as exec from "@actions/exec";
@@ -73,7 +74,7 @@ describe("OpenCart Installer Action", () => {
     // Verify Playwright dependencies were installed
     expect(exec.exec).toHaveBeenCalledWith("npx", [
       "-y",
-      "playwright@1.59.1",
+      `playwright@${pwPkg.version}`,
       "install",
       "chromium",
       "--with-deps",
