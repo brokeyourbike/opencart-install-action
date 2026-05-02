@@ -11,20 +11,25 @@ export async function run(): Promise<void> {
     const password = core.getInput("admin-password", { required: true });
     const zipPath = path.resolve(core.getInput("zip-path", { required: true }));
 
-    // Ensure Playwright browsers are installed on the runner
-    core.info(
-      `⚙️ Installing Chromium dependencies (Playwright v${pwPkg.version})...`,
-    );
-    await exec.exec("npx", [
-      "-y",
-      `playwright@${pwPkg.version}`,
-      "install",
-      "chromium",
-      "--with-deps",
-    ]);
+    let browser;
+    try {
+      core.info(`🚀 Attempting to launch pre-installed system Chrome...`);
+      browser = await chromium.launch({ channel: "chrome" });
+    } catch (error) {
+      core.info(
+        `⚠️ System Chrome not found. Falling back to Playwright Chromium (v${pwPkg.version})...`,
+      );
+      await exec.exec("npx", [
+        "-y",
+        `playwright@${pwPkg.version}`,
+        "install",
+        "chromium",
+        "--with-deps",
+      ]);
+      browser = await chromium.launch();
+    }
 
-    core.info(`🚀 Launching browser to install: ${zipPath}`);
-    const browser = await chromium.launch();
+    core.info(`🚀 Browser launched! Installing: ${zipPath}`);
     const page = await browser.newPage();
 
     try {
@@ -64,8 +69,10 @@ export async function run(): Promise<void> {
       const installButton = page.locator("#extension .btn-success").first();
       await installButton.waitFor({ state: "visible" });
 
-      await Promise.all([
-        page.waitForResponse((res) => res.url().includes("installer|install")),
+      const [response] = await Promise.all([
+        page.waitForResponse(
+          (res) => res.url().match(/installer[|.]install/) !== null,
+        ),
         installButton.click(),
       ]);
 

@@ -91658,17 +91658,23 @@ async function run() {
         const username = core.getInput("admin-username", { required: true });
         const password = core.getInput("admin-password", { required: true });
         const zipPath = path.resolve(core.getInput("zip-path", { required: true }));
-        // Ensure Playwright browsers are installed on the runner
-        core.info(`⚙️ Installing Chromium dependencies (Playwright v${package_json_1.default.version})...`);
-        await exec.exec("npx", [
-            "-y",
-            `playwright@${package_json_1.default.version}`,
-            "install",
-            "chromium",
-            "--with-deps",
-        ]);
-        core.info(`🚀 Launching browser to install: ${zipPath}`);
-        const browser = await playwright_1.chromium.launch();
+        let browser;
+        try {
+            core.info(`🚀 Attempting to launch pre-installed system Chrome...`);
+            browser = await playwright_1.chromium.launch({ channel: "chrome" });
+        }
+        catch (error) {
+            core.info(`⚠️ System Chrome not found. Falling back to Playwright Chromium (v${package_json_1.default.version})...`);
+            await exec.exec("npx", [
+                "-y",
+                `playwright@${package_json_1.default.version}`,
+                "install",
+                "chromium",
+                "--with-deps",
+            ]);
+            browser = await playwright_1.chromium.launch();
+        }
+        core.info(`🚀 Browser launched! Installing: ${zipPath}`);
         const page = await browser.newPage();
         try {
             // Login
@@ -91701,8 +91707,8 @@ async function run() {
             core.info("⚙️ Triggering extraction...");
             const installButton = page.locator("#extension .btn-success").first();
             await installButton.waitFor({ state: "visible" });
-            await Promise.all([
-                page.waitForResponse((res) => res.url().includes("installer|install")),
+            const [response] = await Promise.all([
+                page.waitForResponse((res) => res.url().match(/installer[|.]install/) !== null),
                 installButton.click(),
             ]);
             core.info("✅ Extension uploaded and extracted successfully!");

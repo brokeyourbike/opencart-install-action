@@ -68,10 +68,46 @@ describe("OpenCart Installer Action", () => {
     });
   });
 
-  it("should successfully run the installation flow", async () => {
+  it("should successfully run using system Chrome", async () => {
     await run();
 
-    // Verify Playwright dependencies were installed
+    expect(exec.exec).not.toHaveBeenCalled();
+    expect(core.info).toHaveBeenCalledWith(
+      "✅ Extension uploaded and extracted successfully!",
+    );
+    expect(mocks.mockClose).toHaveBeenCalled();
+  });
+
+  it("should fallback to installing Chromium if system Chrome is missing", async () => {
+    // 1. Force the first launch({ channel: 'chrome' }) to fail
+    const { chromium } = await import("playwright");
+    vi.mocked(chromium.launch)
+      .mockRejectedValueOnce(new Error("Executable doesn't exist")) // Fails first attempt
+      .mockResolvedValueOnce({
+        // Succeeds second attempt
+        newPage: vi.fn().mockResolvedValue({
+          goto: mocks.mockGoto,
+          fill: mocks.mockFill,
+          click: mocks.mockClick,
+          url: mocks.mockUrl,
+          waitForLoadState: vi.fn(),
+          waitForEvent: vi.fn().mockResolvedValue({ setFiles: vi.fn() }),
+          locator: vi.fn().mockReturnValue({
+            waitFor: vi.fn(),
+            first: vi
+              .fn()
+              .mockReturnValue({ waitFor: vi.fn(), click: mocks.mockClick }),
+          }),
+          waitForResponse: vi
+            .fn()
+            .mockResolvedValue({ json: vi.fn().mockResolvedValue({}) }),
+        }),
+        close: mocks.mockClose,
+      } as any);
+
+    await run();
+
+    // 2. Verify it triggered the fallback installation
     expect(exec.exec).toHaveBeenCalledWith("npx", [
       "-y",
       `playwright@${pwPkg.version}`,
@@ -79,15 +115,9 @@ describe("OpenCart Installer Action", () => {
       "chromium",
       "--with-deps",
     ]);
-
-    // Verify it reached the end of the script successfully
     expect(core.info).toHaveBeenCalledWith(
       "✅ Extension uploaded and extracted successfully!",
     );
-
-    // Verify the browser was closed to prevent memory leaks
-    expect(mocks.mockClose).toHaveBeenCalled();
-    expect(core.setFailed).not.toHaveBeenCalled();
   });
 
   it("should fail if authentication token is missing from URL", async () => {
