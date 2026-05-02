@@ -33,7 +33,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Setup OpenCart 4
-        uses: stasiuk/setup-opencart@v1
+        uses: brokeyourbike/setup-opencart-action@v1
         with:
           oc-version: '4.1.0.3'
           db-password: 'root'
@@ -41,7 +41,7 @@ jobs:
           admin-password: 'admin_pass'
 
       - name: Install Extension
-        uses: stasiuk/opencart-install-action@v1
+        uses: brokeyourbike/opencart-install-action@v1
         with:
           store-url: 'http://localhost:8080'
           admin-username: 'admin'
