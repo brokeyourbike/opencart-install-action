@@ -29,21 +29,23 @@ jobs:
 
       - name: Generate Dummy .ocmod.zip
         run: |
-          mkdir -p dummy_ext/upload/extension/my_vendor/module/
-          # Changed to .php
-          echo "<?php // TS ACTION WORKS" > dummy_ext/upload/extension/my_vendor/module/ts_test.php
+          # 1. Create the base folders
+          mkdir -p dummy_ext/extension/my_vendor/module/
+          echo "<?php // TS ACTION WORKS" > dummy_ext/extension/my_vendor/module/ts_test.php
           
+          # 2. Create the install.json
           cat <<EOF > dummy_ext/install.json
           {
             "name": "Dummy Extension",
             "version": "1.0",
-            "author": "John Doe",
+            "author": "Ivan Stasiuk",
             "link": "https://example.com"
           }
           EOF
           
+          # 3. Zip the contents flatly
           cd dummy_ext
-          zip -r ../dummy.ocmod.zip upload/ install.json
+          zip -r ../dummy.ocmod.zip .
 
       - name: Install Extension
         uses: ./
