@@ -24,7 +24,7 @@ async function run(): Promise<void> {
     const page = await browser.newPage();
 
     try {
-      // 1. Login
+      // Login
       core.info("🔐 Logging into OpenCart admin...");
       await page.goto(`${storeUrl}/admin/`);
       await page.fill("#input-username", username);
@@ -32,7 +32,7 @@ async function run(): Promise<void> {
       await page.click('button[type="submit"]');
       await page.waitForLoadState("networkidle");
 
-      // 2. Extract Token
+      // Extract Token
       const currentUrl = page.url();
       const tokenMatch = currentUrl.match(/user_token=([^&]+)/);
       if (!tokenMatch)
@@ -42,7 +42,7 @@ async function run(): Promise<void> {
       const installerUrl = `${storeUrl}/admin/index.php?route=marketplace/installer&user_token=${tokenMatch[1]}`;
       await page.goto(installerUrl);
 
-      // 3. Upload File
+      // Upload File
       core.info("📦 Uploading extension...");
       const [fileChooser] = await Promise.all([
         page.waitForEvent("filechooser"),
@@ -50,10 +50,20 @@ async function run(): Promise<void> {
       ]);
       await fileChooser.setFiles(zipPath);
 
-      // 4. Wait for Success
-      core.info("⏳ Waiting for OpenCart extraction process...");
+      // Wait for Success
+      core.info("⏳ Waiting for upload to finish...");
       const successAlert = page.locator(".alert-success");
       await successAlert.waitFor({ state: "visible", timeout: 30000 });
+
+      // Finds the green '+' button in the extension list
+      core.info("⚙️ Triggering extraction...");
+      const installButton = page.locator("#extension .btn-success").first();
+      await installButton.waitFor({ state: "visible" });
+
+      await Promise.all([
+        page.waitForResponse((res) => res.url().includes("installer|install")),
+        installButton.click(),
+      ]);
 
       core.info("✅ Extension uploaded and extracted successfully!");
     } finally {
