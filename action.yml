@@ -1,0 +1,24 @@
+name: 'Install OpenCart 4 Extension'
+description: 'Uses a headless browser to install an .ocmod.zip extension into OpenCart 4.'
+author: 'Ivan Stasiuk'
+branding:
+  icon: 'package'
+  color: 'orange'
+
+inputs:
+  store-url:
+    description: 'URL of the OpenCart store'
+    default: 'http://localhost:8080'
+  admin-username:
+    description: 'Admin username'
+    default: 'admin'
+  admin-password:
+    description: 'Admin password'
+    required: true
+  zip-path:
+    description: 'Path to the .ocmod.zip file'
+    required: true
+
+runs:
+  using: 'node24'
+  main: 'dist/index.js'

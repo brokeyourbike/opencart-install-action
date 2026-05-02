@@ -1,20 +1,42 @@
-.htaccess
-/config.php
-admin/config.php
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-!index.html
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-download/
-image/data/
-image/cache/
-system/cache/
-system/logs/
+# testing
+/coverage
 
-system/storage/
+# next.js
+/.next/
+/out/
 
-# vQmod log files
-vqmod/logs/*
-# vQmod cache files
-vqmod/vqcache/*
-vqmod/checked.cache
-vqmod/mods.cache
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+__test__/_temp
+_temp/
+lib/
+node_modules/
+.vscode/

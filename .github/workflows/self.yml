@@ -1,0 +1,70 @@
+name: self
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mariadb:10.6
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: opencart
+        ports: ["3306:3306"]
+        options: --health-cmd="mysqladmin ping"
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: brokeyourbike/setup-opencart-action@v1
+        with:
+          oc-version: '4.1.0.3'
+          db-password: 'root'
+          admin-password: 'admin_pass'
+
+      - name: Generate Dummy .ocmod.zip
+        run: |
+          # Create the flat admin folder structure
+          mkdir -p dummy_ext/admin/controller/module/
+          echo "<?php // ADMIN CONTROLLER WORKS" > dummy_ext/admin/controller/module/my_vendor.php
+
+          # Create the install.json at the root
+          cat <<EOF > dummy_ext/install.json
+          {
+            "name": "Dummy Extension",
+            "version": "1.0",
+            "author": "Ivan Stasiuk",
+            "link": "https://example.com",
+            "code": "my_vendor"
+          }
+          EOF
+
+          cd dummy_ext
+          # Zip the contents flatly so admin/ and install.json are at the root
+          zip -r ../my_vendor.ocmod.zip .
+
+      - name: Install Extension
+        uses: ./
+        with:
+          store-url: 'http://localhost:8080'
+          admin-username: 'admin'
+          admin-password: 'admin_pass'
+          zip-path: './my_vendor.ocmod.zip'
+
+      - name: Debug Extraction Output
+        if: always()
+        run: |
+          echo "--- Checking Vendor Folder ---"
+          docker exec opencart-server ls -la /var/www/html/extension/my_vendor/ || true
+          
+          echo "--- Checking Admin Controller Folder ---"
+          docker exec opencart-server ls -la /var/www/html/extension/my_vendor/admin/controller/module/ || true
+
+      - name: Verify Physical Extraction
+        run: |
+          docker exec opencart-server cat /var/www/html/extension/my_vendor/admin/controller/module/my_vendor.php | grep "ADMIN CONTROLLER WORKS"

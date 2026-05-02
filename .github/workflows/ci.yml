@@ -1,0 +1,45 @@
+name: ci
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+
+      - name: Verify compiled action is committed
+        run: |
+          # If this fails, it means someone changed src/ but forgot to run 'npm run build' and commit 'dist/'
+          if [ -n "$(git status --porcelain dist/)" ]; then
+            echo "Error: Uncommitted changes in the dist/ directory. Please run 'npm run build' and commit the result."
+            git diff
+            exit 1
+          fi
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm test
+      - uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
