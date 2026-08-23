@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/brokeyourbike/opencart-install-action/compare/v1.0.0...v1.0.1) (2026-08-23)
+
+
+### Bug Fixes
+
+* deps ([b9db26b](https://github.com/brokeyourbike/opencart-install-action/commit/b9db26b844f63b28ecb14e9d3215897ed52a3783))
+
 ## 1.0.0 (2026-05-02)
 
 
